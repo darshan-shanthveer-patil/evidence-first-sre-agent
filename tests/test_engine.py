@@ -67,7 +67,19 @@ class IncidentAnalyzerTests(unittest.TestCase):
         self.assertEqual("inconclusive", report.status)
         self.assertIn("service.endpoint_count", report.missing_evidence)
 
+    def test_rejects_duplicate_evidence_names(self) -> None:
+        payload = {
+            "incident_id": "duplicate-signals",
+            "symptom": "conflicting collector output",
+            "evidence": [
+                {"name": "service.endpoint_count", "value": 0, "source": "collector-a"},
+                {"name": "service.endpoint_count", "value": 2, "source": "collector-b"},
+            ],
+        }
+
+        with self.assertRaisesRegex(ValueError, "duplicate evidence"):
+            Incident.from_dict(payload)
+
 
 if __name__ == "__main__":
     unittest.main()
-

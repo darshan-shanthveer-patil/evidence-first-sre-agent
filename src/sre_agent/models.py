@@ -36,12 +36,17 @@ class Incident:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Incident":
+        evidence = tuple(
+            Evidence.from_dict(item) for item in payload.get("evidence", [])
+        )
+        names = [item.name for item in evidence]
+        if len(names) != len(set(names)):
+            raise ValueError("duplicate evidence signal names are not allowed")
+
         return cls(
             incident_id=str(payload["incident_id"]),
             symptom=str(payload["symptom"]),
-            evidence=tuple(
-                Evidence.from_dict(item) for item in payload.get("evidence", [])
-            ),
+            evidence=evidence,
         )
 
     def observations(self) -> dict[str, Evidence]:
