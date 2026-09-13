@@ -1,0 +1,10 @@
+{
+  "incident_id": "inc-2026-005",
+  "symptom": "p90 request latency exceeded the service objective",
+  "evidence": [
+    {"name": "container.cpu_utilization_pct", "value": 97, "source": "prometheus"},
+    {"name": "container.cpu_throttled_seconds_rate", "value": 0.21, "source": "prometheus"},
+    {"name": "http.latency_p90_ms", "value": 930, "source": "prometheus"},
+    {"name": "http.latency_slo_ms", "value": 500, "source": "service-catalog"}
+  ]
+}

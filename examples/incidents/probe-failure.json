@@ -1,0 +1,10 @@
+{
+  "incident_id": "inc-2026-003",
+  "symptom": "Deployment has unavailable replicas",
+  "evidence": [
+    {"name": "http.probe_success", "value": false, "source": "kubernetes"},
+    {"name": "pod.ready", "value": false, "source": "kubernetes"},
+    {"name": "http.probe_status_code", "value": 404, "source": "kubernetes"}
+  ]
+}
+

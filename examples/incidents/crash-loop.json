@@ -1,0 +1,10 @@
+{
+  "incident_id": "inc-2026-004",
+  "symptom": "Pod never reaches a stable running state",
+  "evidence": [
+    {"name": "pod.waiting_reason", "value": "CrashLoopBackOff", "source": "kubernetes"},
+    {"name": "workload.restart_count", "value": 8, "source": "kubernetes"},
+    {"name": "workload.last_exit_code", "value": 1, "source": "kubernetes"}
+  ]
+}
+

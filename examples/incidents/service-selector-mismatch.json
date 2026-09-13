@@ -1,0 +1,10 @@
+{
+  "incident_id": "inc-2026-002",
+  "symptom": "Service returns connection errors although workload pods are ready",
+  "evidence": [
+    {"name": "service.endpoint_count", "value": 0, "source": "kubernetes"},
+    {"name": "service.selector_match_count", "value": 0, "source": "kubernetes"},
+    {"name": "workload.ready_pod_count", "value": 3, "source": "kubernetes"}
+  ]
+}
+
