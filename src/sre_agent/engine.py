@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from math import isfinite, nan
 
-from .models import Evidence, Hypothesis, Incident, IncidentReport
+from .models import Evidence, EvidenceCoverage, Hypothesis, Incident, IncidentReport
 
 
 Rule = Callable[[dict[str, Evidence]], Hypothesis | None]
@@ -24,6 +25,10 @@ class IncidentAnalyzer:
 
     def analyze(self, incident: Incident) -> IncidentReport:
         observations = incident.observations()
+        coverage = tuple(
+            EvidenceCoverage(item.name, item.source, item.status)
+            for item in incident.evidence
+        )
         hypotheses = tuple(
             sorted(
                 (
@@ -41,6 +46,7 @@ class IncidentAnalyzer:
                 incident_id=incident.incident_id,
                 status="diagnosed",
                 hypotheses=hypotheses,
+                evidence_coverage=coverage,
             )
 
         useful_signals = (
@@ -61,6 +67,7 @@ class IncidentAnalyzer:
             incident_id=incident.incident_id,
             status="inconclusive",
             missing_evidence=missing,
+            evidence_coverage=coverage,
         )
 
     @staticmethod
@@ -133,7 +140,7 @@ class IncidentAnalyzer:
     def _probe_failure(observations: dict[str, Evidence]) -> Hypothesis | None:
         probe = observations.get("http.probe_success")
         ready = observations.get("pod.ready")
-        if not (probe and ready and not _truthy(probe.value) and not _truthy(ready.value)):
+        if not (probe and ready and _explicit_false(probe.value) and _explicit_false(ready.value)):
             return None
 
         status = observations.get("http.probe_status_code")
@@ -219,13 +226,17 @@ class IncidentAnalyzer:
 
 
 def _number(value: object) -> float:
+    # Invalid measurements must not masquerade as a measured zero.
+    if isinstance(value, bool):
+        return nan
     try:
-        return float(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return 0.0
+        number = float(value)  # type: ignore[arg-type]
+        return number if isfinite(number) else nan
+    except (TypeError, ValueError, OverflowError):
+        return nan
 
 
-def _truthy(value: object) -> bool:
+def _explicit_false(value: object) -> bool:
     if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes"}
-    return bool(value)
+        return value.strip().lower() in {"0", "false", "no"}
+    return value is False or (type(value) in (int, float) and value == 0)

@@ -1,0 +1,9 @@
+{
+  "incident_id": "synthetic-partial-oom",
+  "symptom": "The payment container restarted; metrics and logs are unavailable.",
+  "evidence": [
+    {"name": "workload.container_last_state.reason", "value": "OOMKilled", "source": "kubernetes", "status": "available"},
+    {"name": "container.memory_working_set_pct_limit", "value": 99, "source": "prometheus", "status": "stale"},
+    {"name": "logs.errors", "value": null, "source": "loki", "status": "unavailable"}
+  ]
+}

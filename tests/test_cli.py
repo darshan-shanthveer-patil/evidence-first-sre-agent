@@ -11,6 +11,28 @@ FIXTURES = Path(__file__).parents[1] / "examples" / "incidents"
 
 
 class CliTests(unittest.TestCase):
+    def test_reports_gaps_for_both_diagnosed_and_inconclusive_incidents(self):
+        for filename, status in (("telemetry-gaps.json", "inconclusive"), ("partial-oom.json", "diagnosed")):
+            with self.subTest(filename=filename):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    main([str(FIXTURES / filename)])
+                self.assertIn(f"Status: {status}", output.getvalue())
+                self.assertIn("Evidence limitations", output.getvalue())
+                self.assertIn("logs.errors: unavailable (loki)", output.getvalue())
+
+    def test_json_preserves_each_collection_outcome(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            main([str(FIXTURES / "telemetry-gaps.json"), "--json"])
+        payload = json.loads(output.getvalue())
+        self.assertEqual("inconclusive", payload["status"])
+        self.assertEqual([], payload["hypotheses"])
+        self.assertEqual(
+            {"stale", "empty", "truncated", "unavailable"},
+            {item["status"] for item in payload["evidence_coverage"]},
+        )
+
     def test_prints_human_readable_report(self) -> None:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -34,4 +56,3 @@ class CliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
