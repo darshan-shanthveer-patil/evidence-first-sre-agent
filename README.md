@@ -17,6 +17,8 @@ introduced. This gives future agent behavior a testable baseline.
 - Separates verification checks from low-risk operational actions.
 - Returns an explicit `inconclusive` result when the evidence is insufficient.
 - Produces human-readable or JSON output without external dependencies.
+- Excludes unavailable, empty, stale, and truncated observations from diagnosis
+  and reports these evidence gaps explicitly.
 
 ## Quick start
 
@@ -57,6 +59,24 @@ Status: diagnosed
 
 ## Project direction
 
+### Try an incomplete collection
+
+These synthetic fixtures demonstrate the difference between missing evidence
+and evidence of failure:
+
+```bash
+PYTHONPATH=src python -m sre_agent examples/incidents/telemetry-gaps.json
+PYTHONPATH=src python -m sre_agent examples/incidents/partial-oom.json --json
+```
+
+The first returns `inconclusive` with four collection limitations. The second
+diagnoses an OOM kill using the available Kubernetes event, excludes stale
+memory data, and reports the unavailable logs. Neither contacts a real backend.
+See the [collection outcome contract](docs/architecture.md#collection-outcomes)
+before authoring additional fixtures.
+
+### Next integrations
+
 The intended system is an agentic investigation loop, not a chatbot around
 `kubectl`. Each stage must remain inspectable and independently testable:
 
@@ -80,6 +100,6 @@ decisions.
 
 ## Status
 
-Milestone 1 is complete. Live collectors and agent evaluation are planned in
+The deterministic baseline and evidence-status gate are implemented and tested
+with synthetic fixtures. Live collectors and agent evaluation are planned in
 small, independently reviewed increments.
-

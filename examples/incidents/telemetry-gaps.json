@@ -1,0 +1,10 @@
+{
+  "incident_id": "synthetic-telemetry-gaps",
+  "symptom": "Payment requests are failing, but collection is incomplete.",
+  "evidence": [
+    {"name": "workload.container_last_state.reason", "value": "OOMKilled", "source": "kubernetes", "status": "stale"},
+    {"name": "service.endpoint_count", "value": null, "source": "kubernetes", "status": "empty"},
+    {"name": "workload.restart_count", "value": 12, "source": "prometheus", "status": "truncated"},
+    {"name": "logs.errors", "value": null, "source": "loki", "status": "unavailable"}
+  ]
+}

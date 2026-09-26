@@ -31,8 +31,12 @@ def load_incident(path: Path) -> Incident:
 
 def render_text(report: IncidentReport) -> str:
     lines = [f"Incident: {report.incident_id}", f"Status: {report.status}"]
+    gaps = tuple(item for item in report.evidence_coverage if item.status != "available")
+    if gaps:
+        lines.append("Evidence limitations (excluded from diagnosis):")
+        lines.extend(f"- {item.name}: {item.status} ({item.source})" for item in gaps)
     if report.status == "inconclusive":
-        lines.append("Missing evidence:")
+        lines.append("Signals without usable evidence:")
         lines.extend(f"- {item}" for item in report.missing_evidence)
         return "\n".join(lines)
 
@@ -67,4 +71,3 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(render_text(report))
     return 0
-

@@ -18,13 +18,50 @@ collectors.
 
 ## Evidence contract
 
-Every observation retains three fields:
+Every observation retains its value, source, and collection outcome:
 
 | Field | Purpose | Example |
 | --- | --- | --- |
 | `name` | Stable signal identifier | `service.endpoint_count` |
 | `value` | Observed value | `0` |
 | `source` | System that produced it | `kubernetes` |
+| `status` | Whether the value can support diagnosis; defaults to `available` | `stale` |
+
+### Collection outcomes
+
+| Status | Meaning | Used by diagnosis rules? |
+| --- | --- | --- |
+| `available` | Collector supplied a complete, current observation | Yes |
+| `unavailable` | Collection failed, for example a timeout or denied request | No |
+| `empty` | Query succeeded but returned no matching observations | No |
+| `stale` | Observation is outside the intended investigation window | No |
+| `truncated` | Result is incomplete because a collection limit was reached | No |
+
+A measured zero is `available` with `value: 0`. An empty result is not a
+measured zero and cannot prove that a service has no endpoints. Non-available
+outcomes may omit `value` or set it to null; available observations require a
+non-null value. Unknown statuses are rejected. Existing fixtures without a
+status retain their original behavior by defaulting to `available`.
+
+Statuses are supplied by the fixture author today, and by collectors in a
+future increment. The engine does not calculate freshness, detect pagination,
+or contact backends. Conservatively excluding all truncated results avoids
+claims about completeness; supporting individual facts from partial responses
+would need a more detailed contract.
+
+JSON reports retain `evidence_coverage` for every supplied signal, including
+excluded ones, without copying their raw values into coverage metadata. Text
+reports show the exclusions even when other evidence supports a diagnosis.
+This inventory is not a claim that every necessary backend was queried.
+An available Kubernetes OOM event can support the baseline diagnosis while
+stale memory metrics remain excluded from its confidence score. The scores
+are fixed rule weights, not calibrated probabilities.
+
+Malformed numeric or boolean values cannot act as zero/false in a rule. Full
+signal-schema validation is deferred; `available` alone does not guarantee a
+value has the right type for a specific rule. No supported hypothesis means
+`inconclusive`, not healthy. `missing_evidence` lists absent or excluded useful
+signals when inconclusive; it is not a complete per-rule collection plan.
 
 Collectors will later add timestamps, query windows, cluster identity, and
 resource identity. Those fields are deferred until the first real collector so
