@@ -13,6 +13,13 @@ class Evidence:
     name: str
     value: Any
     source: str
+    status: str = "available"
+
+    def __post_init__(self) -> None:
+        if self.status not in ("available", "unavailable", "empty", "stale", "truncated"):
+            raise ValueError(f"unknown evidence status: {self.status!r}")
+        if self.status == "available" and self.value is None:
+            raise ValueError("available evidence must have a non-null value")
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Evidence":
@@ -20,6 +27,7 @@ class Evidence:
             name=str(payload["name"]),
             value=payload.get("value"),
             source=str(payload["source"]),
+            status=payload.get("status", "available"),
         )
 
     def label(self) -> str:
@@ -50,7 +58,17 @@ class Incident:
         )
 
     def observations(self) -> dict[str, Evidence]:
-        return {item.name: item for item in self.evidence}
+        """Only complete, current observations may support a diagnosis."""
+        return {item.name: item for item in self.evidence if item.status == "available"}
+
+
+@dataclass(frozen=True)
+class EvidenceCoverage:
+    """Collection outcome for a supplied signal, without its raw value."""
+
+    name: str
+    source: str
+    status: str
 
 
 @dataclass(frozen=True)
@@ -73,6 +91,7 @@ class IncidentReport:
     status: str
     hypotheses: tuple[Hypothesis, ...] = field(default_factory=tuple)
     missing_evidence: tuple[str, ...] = field(default_factory=tuple)
+    evidence_coverage: tuple[EvidenceCoverage, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
